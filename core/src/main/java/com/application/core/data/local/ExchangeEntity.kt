@@ -1,4 +1,5 @@
 package com.application.core.data.local
+
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -14,4 +15,11 @@ data class ExchangeEntity(
     @ColumnInfo(name = "rate")
     val rate: Double,
 
-)
+    @ColumnInfo(name = "convertedAmount")
+    var convertedAmount: Double = 0.0
+) {
+    fun getConvertedAmount(amount: Double): Double {
+        val amountInUSD = amount * rate
+        return amountInUSD
+    }
+}

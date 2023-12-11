@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    android:id="@+id/row"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tool="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:minWidth="150dp"
+    android:layout_margin="16dp"
+    android:nextFocusRight="@+id/row"
+    android:padding="4dp"
+    android:nextFocusLeft="@+id/row">
+
+    <TextView
+        android:id="@+id/txtAmount"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
+        android:textColor="?colorOnBackground"
+        android:gravity="center"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:layout_margin="4dp"
+        tool:text="AMD" />
+
+    <TextView
+        android:id="@+id/txtSymbol"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
+        android:textColor="?colorOnBackground"
+        android:layout_margin="4dp"
+        android:textSize="12sp"
+        android:gravity="center"
+        tool:text="AMD" />
+
+</LinearLayout>

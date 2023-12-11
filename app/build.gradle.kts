@@ -63,5 +63,8 @@ dependencies {
     kapt("androidx.hilt:hilt-compiler:1.1.0")
 
     implementation(project(path = ":core"))
+    
+    //flexbox
+    implementation ("com.google.android.flexbox:flexbox:3.0.0")
 
 }

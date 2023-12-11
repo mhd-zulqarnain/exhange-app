@@ -3,6 +3,7 @@ package com.application.core.exchange
 import com.application.core.Result
 import com.application.core.data.local.ExchangeEntity
 import com.application.core.data.local.mapper.ExchangeEntityToDomainMapper
+import com.application.core.worker.WorkerRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
@@ -12,6 +13,7 @@ class ExchangeRepository @Inject constructor(
     private val remoteDataSource: ExchangeRemoteDataSource,
     private val localDataSource: ExchangeLocalDataSource,
     private val exchangeEntityToDomainMapper: ExchangeEntityToDomainMapper,
+    private val workerRepository: WorkerRepository
 ) {
     private var cacheResult: ArrayList<ExchangeEntity>? = null
 
@@ -33,35 +35,39 @@ class ExchangeRepository @Inject constructor(
             }
 
             // Fetch data from remote source if no cached or database data exists
-            fetchDataFromRemoteDataSource()
+            when (val result = remoteDataSource.getExchangeRate()) {
+                is Result.Success -> {
+
+                    val data = result.data
+                    val list = exchangeEntityToDomainMapper.mapTo(data) // Map data to domain model
+                    localDataSource.insertExchangeRates(data) // Save data to local database
+                    workerRepository.scheduleUpdateExchangeRate()  //schedule to get updated data
+                    cacheResult(list)
+                    emit(Result.Success(list))
+                }
+
+                is Result.Error -> {
+                    emit(result) // Emit error if data fetching fails
+                }
+
+                else -> {
+                    // Handle unexpected results
+                    emit(Result.Error(Exception("Unexpected result fetching data")))
+                }
+            }
+
         } catch (e: Exception) {
             emit(Result.Error(e)) // Emit error if any exception occurs
         }
     }
 
-    private fun fetchDataFromRemoteDataSource(): Flow<Result<List<ExchangeEntity>>> = flow {
-        when (val result = remoteDataSource.getExchangeRate()) {
-            is Result.Success -> {
-                val data = result.data
-                val list = exchangeEntityToDomainMapper.mapTo(data) // Map data to domain model
-                localDataSource.insertExchangeRates(data) // Save data to local database
-                cacheResult(list)
-                emit(Result.Success(list))
-            }
 
-            is Result.Error -> {
-                emit(result) // Emit error if data fetching fails
-            }
-
-            else -> {
-                // Handle unexpected results
-                emit(Result.Error(Exception("Unexpected result fetching data")))
-            }
-        }
-    }
-
-    private fun cacheResult(list: List<ExchangeEntity>) {
+    fun cacheResult(list: List<ExchangeEntity>) {
         cacheResult?.clear()
         cacheResult?.addAll(list)
+    }
+
+    fun clearCache() {
+        cacheResult?.clear()
     }
 }
