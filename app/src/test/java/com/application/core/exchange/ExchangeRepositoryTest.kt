@@ -40,8 +40,8 @@ class ExchangeRepositoryTest {
         val expectedList = mapperSpy.mapTo(apiResponse)
         repository.getExchangeRate().test {
             val expectItem = expectItem()
-            verify(localDataSource).insertExchangeRates(apiResponse)
-//            Assert.assertEquals(expectItem, Result.Success(expectedList))
+//            verify(localDataSource).insertExchangeRates(apiResponse)
+            Assert.assertEquals(expectItem, Result.Success(expectedList))
             expectComplete()
         }
     }

@@ -18,6 +18,7 @@ package com.application.exchange
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
+import java.lang.reflect.Field
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -54,4 +55,15 @@ fun <T> LiveData<T>.getOrAwaitValue(
 
     @Suppress("UNCHECKED_CAST")
     return data as T
+}
+
+fun setField(`object`: Any?, fld: Field?, value: Any?) {
+    try {
+        fld?.isAccessible = true
+        fld?.set(`object`, value)
+    } catch (e: IllegalAccessException) {
+        val fieldName = if (null == fld) "n/a" else fld.name
+        throw RuntimeException("Failed to set $fieldName of object", e)
+    }
+
 }
