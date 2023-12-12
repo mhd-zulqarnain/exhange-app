@@ -12,6 +12,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doAfterTextChanged
+import androidx.lifecycle.Observer
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.application.core.Result
 import com.application.core.data.local.ExchangeEntity
@@ -40,50 +41,61 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         initView()
+    }
 
+    private fun initView() {
+        viewModel.setStateEvent(ExchangeStateEvent.FetchExchangeRate)
 
+        viewModel.exchangeCurrency.observe(
+            this, Observer(this::handleExchangeResult)
+        )
+
+        binding.layoutMain.amountEditText.apply {
+            doAfterTextChanged {
+                viewModel.setStateEvent(
+                    ExchangeStateEvent.ValidateConversion(
+                        this.text.toString(), selectedCurrency
+                    )
+                )
+            }
+        }
+
+        binding.layoutMain.currencyEditText.setOnClickListener {
+            showCurrencySelection()
+        }
+
+        binding.layoutMain.btnConvert.setOnClickListener {
+            viewModel.setStateEvent(
+                ExchangeStateEvent.ConvertAmount(
+                    binding.layoutMain.amountEditText.text.toString().toDouble(), selectedCurrency?.rate?:0.0
+                )
+            )
+        }
+
+        //register Receiver to clear cache
         val intentRefreshTokenExpire = IntentFilter(ACTION_CLEAR_LOCAL_CACHE)
         LocalBroadcastManager.getInstance(this).registerReceiver(
             onClearCacheReceiver, intentRefreshTokenExpire
         )
     }
 
-    private fun initView() {
-        viewModel.setStateEvent(ExchangeStateEvent.FetchExchangeRate)
-        viewModel.exchangeCurrency.observe(this) { result ->
-            when (result) {
-                is ExchangeResult.ExchangeRateResult -> {
-                    handleSymbolDropDown(result)
-                }
-
-                is ExchangeResult.ExchangeRequestResult -> {
-                    populateUI(result.result)
-                }
+    private fun handleExchangeResult(result: ExchangeResult?) {
+        when (result) {
+            is ExchangeResult.ExchangeRateResult -> {
+                handleSymbolDropDown(result)
             }
-        }
 
-        binding.layoutMain.amountEditText.apply {
-            doAfterTextChanged {
-                viewModel.loginButtonValidation(
-                    this.text.toString(),
-                    selectedCurrency
-                )
+            is ExchangeResult.ExchangeRequestResult -> {
+                handleConvertedResult(result.result)
             }
-        }
-        binding.layoutMain.currencyEditText.setOnClickListener {
-            showCurrencySelection()
-        }
-        viewModel.loginButtonState.observe(this) {
-            // disable btnConvert the data is valid
-            binding.layoutMain.btnConvert.isEnabled = it
-        }
 
-        binding.layoutMain.btnConvert.setOnClickListener {
-            viewModel.setStateEvent(
-                ExchangeStateEvent.ConvertAmount(
-                    binding.layoutMain.amountEditText.text.toString().toDouble()
-                )
-            )
+            is ExchangeResult.ValidateConversion -> {
+                binding.layoutMain.btnConvert.isEnabled = result.result
+            }
+
+            else -> {
+                //not required
+            }
         }
     }
 
@@ -107,7 +119,7 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    private fun populateUI(list: List<ExchangeEntity>) {
+    private fun handleConvertedResult(list: List<ExchangeEntity>) {
 
         val adapter = ExchangeAdapter(list, this)
         val layoutManager = FlexboxLayoutManager(this)
@@ -123,21 +135,21 @@ class MainActivity : AppCompatActivity() {
     private fun showCurrencySelection() {
         exchangeList?.let {
             val rates = ArrayList(it)
-            val view =
-                LayoutInflater.from(this).inflate(R.layout.exchange_dialog_list, null)
+            val view = LayoutInflater.from(this).inflate(R.layout.exchange_dialog_list, null)
             val listView = view.findViewById<ListView>(R.id.lisView)
             val reasonsAdapter = SpinnerAdapter(this, rates)
             listView.adapter = reasonsAdapter
-            val dialog: AlertDialog = MaterialAlertDialogBuilder(this).setTitle("Select Currency")
-                .setView(view).setCancelable(true)
-                .create()
+            val dialog: AlertDialog =
+                MaterialAlertDialogBuilder(this).setTitle("Select Currency").setView(view)
+                    .setCancelable(true).create()
             dialog.show()
 
             listView.setOnItemClickListener { _, _, position, _ ->
                 selectedCurrency = rates[position]
-                viewModel.loginButtonValidation(
-                    binding.layoutMain.amountEditText.text.toString(),
-                    selectedCurrency
+                viewModel.setStateEvent(
+                    ExchangeStateEvent.ValidateConversion(
+                        binding.layoutMain.amountEditText.text.toString(), selectedCurrency
+                    )
                 )
                 binding.layoutMain.currencyEditText.setText(rates[position].symbol)
                 dialog.dismiss()
@@ -155,7 +167,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
 
     override fun onDestroy() {
         super.onDestroy()

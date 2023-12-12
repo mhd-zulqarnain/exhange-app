@@ -18,8 +18,9 @@ data class ExchangeEntity(
     @ColumnInfo(name = "convertedAmount")
     var convertedAmount: Double = 0.0
 ) {
-    fun getConvertedAmount(amount: Double): Double {
-        val amountInUSD = amount * rate
-        return amountInUSD
+    fun getConvertedAmount(amount: Double, desiredCurrencyRate: Double): Double {
+        val convertedRate = rate / desiredCurrencyRate
+        val convertedAmount = amount * convertedRate
+        return convertedAmount
     }
 }

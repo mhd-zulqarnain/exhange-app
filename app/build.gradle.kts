@@ -67,4 +67,15 @@ dependencies {
     //flexbox
     implementation ("com.google.android.flexbox:flexbox:3.0.0")
 
+    configurations.all {
+        resolutionStrategy.setForcedModules("org.mockito:mockito-android:4.4.0")
+        resolutionStrategy.setForcedModules( "org.mockito:mockito-core:4.4.0")
+    }
+    testImplementation ("org.mockito:mockito-core:4.4.0")
+    testImplementation ("androidx.arch.core:core-testing:2.0.1")
+    testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.1")
+    testImplementation  ("org.mockito.kotlin:mockito-kotlin:4.0.0")
+    testImplementation ("org.mockito:mockito-core:4.4.0")
+    testImplementation ("org.mockito:mockito-inline:4.4.0")
+
 }

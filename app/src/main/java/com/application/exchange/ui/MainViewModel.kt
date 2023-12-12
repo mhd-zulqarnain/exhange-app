@@ -1,6 +1,5 @@
 package com.application.exchange.ui
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -14,7 +13,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.Currency
 import javax.inject.Inject
 
 @HiltViewModel
@@ -22,16 +20,9 @@ class MainViewModel @Inject constructor(
     private val exchangeRepository: ExchangeRepository,
     private val dispatcherProvider: CoroutinesDispatcherProvider,
 ) : ViewModel() {
-
-    private val _exchangeCurrency = MutableLiveData<ExchangeResult>()
-
     private var cacheExchangeList: List<ExchangeEntity>? = null
 
-    private val _loginButtonState = MutableLiveData<Boolean>()
-
-    val loginButtonState: LiveData<Boolean> = _loginButtonState
-
-
+    private val _exchangeCurrency = MutableLiveData<ExchangeResult>()
     val exchangeCurrency: LiveData<ExchangeResult>
         get() = _exchangeCurrency
 
@@ -42,26 +33,31 @@ class MainViewModel @Inject constructor(
             }
 
             is ExchangeStateEvent.ConvertAmount -> {
-                exchangeAmount(event.amount)
+                exchangeAmount(event.amount,event.selectedCurrencyUSD)
+            }
+
+            is ExchangeStateEvent.ValidateConversion -> {
+                convertButtonValidation(event.amount, event.selectedCurrency)
             }
         }
 
     }
 
-    fun loginButtonValidation(amount: String, selectedCurrency: ExchangeEntity?) {
-        _loginButtonState.value = amount.isNotEmpty() && selectedCurrency!=null
+    private fun convertButtonValidation(amount: String, selectedCurrency: ExchangeEntity?) {
+        _exchangeCurrency.postValue(ExchangeResult.ValidateConversion(amount.isNotEmpty() && selectedCurrency != null))
     }
 
     private fun fetchExchangeRateFlow() = viewModelScope.launch(dispatcherProvider.io) {
         // can be launched in a separate asynchronous job
-        _exchangeCurrency.postValue(ExchangeResult.ExchangeRateResult(Result.Loading))
         exchangeRepository.getExchangeRate().onEach { result ->
             withContext(dispatcherProvider.main) {
                 when (result) {
                     is Result.Success -> {
-                        Log.e("HomeViewModel", "Success ${result.data.size}")
                         cacheExchangeList = result.data
                         _exchangeCurrency.postValue(ExchangeResult.ExchangeRateResult(result))
+                    }
+                    is Result.Loading -> {
+                        _exchangeCurrency.postValue(ExchangeResult.ExchangeRateResult(Result.Loading))
                     }
 
                     else -> {
@@ -72,34 +68,31 @@ class MainViewModel @Inject constructor(
         }.launchIn(viewModelScope)
     }
 
-    private fun exchangeAmount(amount: Double) {
-        cacheExchangeList?.let {
-            mapExchangedAmount(amount, it)
+    private fun exchangeAmount(amount: Double ,selectedCurrencyUSD:Double) {
+        cacheExchangeList?.let { list ->
+            list.forEach {
+                it.convertedAmount = it.getConvertedAmount(amount,selectedCurrencyUSD)
+            }
+            _exchangeCurrency.postValue(ExchangeResult.ExchangeRequestResult(list))
         }
-    }
-
-    private fun mapExchangedAmount(amount: Double, list: List<ExchangeEntity>) {
-        list.forEach {
-            it.convertedAmount = it.getConvertedAmount(amount)
-        }
-        _exchangeCurrency.postValue(ExchangeResult.ExchangeRequestResult(list))
     }
 
     fun clearCache() {
-        cacheExchangeList=null
+        cacheExchangeList = null
         exchangeRepository.clearCache()
-        Log.e("ExchangeWorker","ExchangeWorker:clearCache")
         fetchExchangeRateFlow()
-
     }
 }
 
 sealed class ExchangeResult {
     data class ExchangeRateResult(val result: Result<List<ExchangeEntity>>) : ExchangeResult()
     data class ExchangeRequestResult(val result: List<ExchangeEntity>) : ExchangeResult()
+    data class ValidateConversion(val result: Boolean) : ExchangeResult()
 }
 
 sealed class ExchangeStateEvent {
     object FetchExchangeRate : ExchangeStateEvent()
-    class ConvertAmount(val amount: Double) : ExchangeStateEvent()
+    class ConvertAmount(val amount: Double,val selectedCurrencyUSD: Double) : ExchangeStateEvent()
+    class ValidateConversion(val amount: String, val selectedCurrency: ExchangeEntity?) :
+        ExchangeStateEvent()
 }
