@@ -9,15 +9,16 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
+
 class ExchangeRepository @Inject constructor(
     private val remoteDataSource: ExchangeRemoteDataSource,
     private val localDataSource: ExchangeLocalDataSource,
     private val exchangeEntityToDomainMapper: ExchangeEntityToDomainMapper,
     private val workerRepository: WorkerRepository
-) {
+)  {
     private var cacheResult: ArrayList<ExchangeEntity>? = null
 
-    fun getExchangeRate(): Flow<Result<List<ExchangeEntity>>> = flow {
+     fun getExchangeRate(): Flow<Result<List<ExchangeEntity>>> = flow {
         try {
             // Check if cached result exists
             cacheResult?.let { cachedData ->
@@ -62,12 +63,12 @@ class ExchangeRepository @Inject constructor(
     }
 
 
-    fun cacheResult(list: List<ExchangeEntity>) {
+     fun cacheResult(list: List<ExchangeEntity>) {
         cacheResult?.clear()
         cacheResult?.addAll(list)
     }
 
-    fun clearCache() {
+     fun clearCache() {
         cacheResult?.clear()
     }
 }
