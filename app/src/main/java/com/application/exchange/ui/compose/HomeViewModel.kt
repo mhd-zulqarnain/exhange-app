@@ -47,7 +47,7 @@ class HomeViewModel @Inject constructor(
         _exchangeCurrency.postValue(ExchangeResult.ValidateConversion(amount.isNotEmpty() && selectedCurrency != null))
     }
 
-    private fun fetchExchangeRateFlow() = viewModelScope.launch(dispatcherProvider.io) {
+     fun fetchExchangeRateFlow() = viewModelScope.launch(dispatcherProvider.io) {
         // can be launched in a separate asynchronous job
         exchangeRepository.getExchangeRate().onEach { result ->
             withContext(dispatcherProvider.main) {
