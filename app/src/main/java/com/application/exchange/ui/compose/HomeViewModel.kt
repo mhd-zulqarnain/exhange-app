@@ -1,5 +1,6 @@
 package com.application.exchange.ui.compose
 
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -33,7 +34,7 @@ class HomeViewModel @Inject constructor(
             }
 
             is ExchangeStateEvent.ConvertAmount -> {
-                exchangeAmount(event.amount,event.selectedCurrencyUSD)
+                exchangeAmount(event.amount, event.selectedCurrencyUSD)
             }
 
             is ExchangeStateEvent.ValidateConversion -> {
@@ -47,7 +48,7 @@ class HomeViewModel @Inject constructor(
         _exchangeCurrency.postValue(ExchangeResult.ValidateConversion(amount.isNotEmpty() && selectedCurrency != null))
     }
 
-     fun fetchExchangeRateFlow() = viewModelScope.launch(dispatcherProvider.io) {
+    fun fetchExchangeRateFlow() = viewModelScope.launch(dispatcherProvider.io) {
         // can be launched in a separate asynchronous job
         exchangeRepository.getExchangeRate().onEach { result ->
             withContext(dispatcherProvider.main) {
@@ -56,6 +57,7 @@ class HomeViewModel @Inject constructor(
                         cacheExchangeList = result.data
                         _exchangeCurrency.postValue(ExchangeResult.ExchangeRateResult(result))
                     }
+
                     is Result.Loading -> {
                         _exchangeCurrency.postValue(ExchangeResult.ExchangeRateResult(Result.Loading))
                     }
@@ -68,10 +70,10 @@ class HomeViewModel @Inject constructor(
         }.launchIn(viewModelScope)
     }
 
-    private fun exchangeAmount(amount: Double ,selectedCurrencyUSD:Double) {
+    fun exchangeAmount(amount: Double, selectedCurrencyUSD: Double) {
         cacheExchangeList?.let { list ->
             list.forEach {
-                it.convertedAmount = it.getConvertedAmount(amount,selectedCurrencyUSD)
+                it.convertedAmount = it.getConvertedAmount(amount, selectedCurrencyUSD)
             }
             _exchangeCurrency.postValue(ExchangeResult.ExchangeRequestResult(list))
         }
@@ -92,7 +94,7 @@ sealed class ExchangeResult {
 
 sealed class ExchangeStateEvent {
     object FetchExchangeRate : ExchangeStateEvent()
-    class ConvertAmount(val amount: Double,val selectedCurrencyUSD: Double) : ExchangeStateEvent()
+    class ConvertAmount(val amount: Double, val selectedCurrencyUSD: Double) : ExchangeStateEvent()
     class ValidateConversion(val amount: String, val selectedCurrency: ExchangeEntity?) :
         ExchangeStateEvent()
 }
