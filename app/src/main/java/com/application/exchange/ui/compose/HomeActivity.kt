@@ -23,12 +23,15 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -57,6 +60,11 @@ class HomeActivity : ComponentActivity() {
 
 @Composable
 fun Greeting(modifier: Modifier = Modifier, viewModel: HomeViewModel = viewModel()) {
+    LaunchedEffect(LocalLifecycleOwner.current) {}
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+
+
     var amount by remember { mutableStateOf("") }
     var selectedCurrency by remember { mutableStateOf("USD") }
     val showDialog = remember { mutableStateOf(false) }
@@ -130,7 +138,9 @@ fun ShowCurrencies(
     selectedCurrency: String,
     viewModel: HomeViewModel
 ) {
-    val list by viewModel.exchangeCurrency.observeAs
+   val list by viewModel.exchangeCurrency.observeAsState()
+
+
     BasicAlertDialog(
         onDismissRequest = { showDialog.value = false },
 
@@ -141,7 +151,9 @@ fun ShowCurrencies(
                 .fillMaxWidth()
         ) {
             LazyColumn {
-                list.value.f
+//                if (list is ExchangeResult.ExchangeRateResult)
+//                    list.result.f
+//                list.value.f
 
             }
         }
