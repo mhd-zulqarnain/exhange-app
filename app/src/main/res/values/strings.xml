@@ -4,4 +4,5 @@
     <string name="select_currency">Select Currency</string>
     <string name="convert">Convert</string>
     <string name="something_went_wrong_please_relaunch_the_application">Something went wrong , please relaunch the application</string>
+    <string name="title_activity_home">HomeActivity</string>
 </resources>
