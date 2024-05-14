@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,6 +34,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -68,6 +72,7 @@ class HomeActivity : ComponentActivity() {
 fun Greeting(modifier: Modifier = Modifier, viewModel: HomeViewModel = viewModel()) {
     val exchangeModel = ExchangeModel("USD", 0.0, 0.0)
     val exchange = remember { mutableStateOf(exchangeModel) }
+    val amount = remember { mutableStateOf("") }
 
     val showDialog = remember { mutableStateOf(false) }
     viewModel.fetchExchangeRateFlow()
@@ -116,9 +121,15 @@ fun Greeting(modifier: Modifier = Modifier, viewModel: HomeViewModel = viewModel
         ) {
             OutlinedTextField(
                 modifier = modifier.fillMaxWidth(),
-                value = exchange.value.amount.toString(),
+                value  =amount.value,
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.None,
+                    autoCorrect = true,
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Next
+                ),
                 onValueChange = {
-                    exchange.value.amount = it.toDouble()
+                    amount.value = it
                 },
                 label = {
                     Text(
@@ -153,11 +164,11 @@ fun Greeting(modifier: Modifier = Modifier, viewModel: HomeViewModel = viewModel
                 onClick = {
                     viewModel.setStateEvent(
                         ExchangeStateEvent.ConvertAmount(
-                            exchange.value.amount,
+                            amount.value.toDouble(),
                             exchange.value.rate
                         )
                     )
-                }, enabled = exchange.value.amount.toString().isNotEmpty()
+                }, enabled =  amount.value.isNotEmpty()
             ) {
                 Text(text = "Convert")
             }
@@ -177,7 +188,7 @@ fun ShowExchangeResult(
         items(list) { exchangeEntity ->
             Text(
                 modifier = Modifier.padding(bottom = 16.dp),
-                text = "${exchangeEntity.symbol}:${exchangeEntity.rate.toString()}",
+                text = "${exchangeEntity.symbol}:${exchangeEntity.convertedAmount.toString()}",
                 style = MaterialTheme.typography.titleMedium
             )
         }
