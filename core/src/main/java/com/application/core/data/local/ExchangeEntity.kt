@@ -24,3 +24,9 @@ data class ExchangeEntity(
         return convertedAmount
     }
 }
+
+class ExchangeModel(
+    var symbol: String,
+    var amount : Double,
+    var rate: Double
+)

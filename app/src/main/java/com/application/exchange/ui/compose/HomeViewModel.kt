@@ -9,6 +9,8 @@ import com.application.core.Result
 import com.application.core.data.local.ExchangeEntity
 import com.application.core.data.model.CoroutinesDispatcherProvider
 import com.application.core.exchange.ExchangeRepository
+import com.application.exchange.ui.ExchangeResult
+import com.application.exchange.ui.ExchangeStateEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -85,15 +87,3 @@ class HomeViewModel @Inject constructor(
     }
 }
 
-sealed class ExchangeResult {
-    data class ExchangeRateResult(val result: Result<List<ExchangeEntity>>) : ExchangeResult()
-    data class ExchangeRequestResult(val result: List<ExchangeEntity>) : ExchangeResult()
-    data class ValidateConversion(val result: Boolean) : ExchangeResult()
-}
-
-sealed class ExchangeStateEvent {
-    object FetchExchangeRate : ExchangeStateEvent()
-    class ConvertAmount(val amount: Double,val selectedCurrencyUSD: Double) : ExchangeStateEvent()
-    class ValidateConversion(val amount: String, val selectedCurrency: ExchangeEntity?) :
-        ExchangeStateEvent()
-}
