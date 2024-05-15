@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.BasicAlertDialog
@@ -70,7 +71,7 @@ class HomeActivity : ComponentActivity() {
 
 @Composable
 fun Greeting(modifier: Modifier = Modifier, viewModel: HomeViewModel = viewModel()) {
-    val exchangeModel = ExchangeModel("USD", 0.0, 0.0)
+    val exchangeModel = ExchangeModel("", 0.0, 0.0)
     val exchange = remember { mutableStateOf(exchangeModel) }
     val amount = remember { mutableStateOf("") }
 
@@ -121,7 +122,7 @@ fun Greeting(modifier: Modifier = Modifier, viewModel: HomeViewModel = viewModel
         ) {
             OutlinedTextField(
                 modifier = modifier.fillMaxWidth(),
-                value  =amount.value,
+                value = amount.value,
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.None,
                     autoCorrect = true,
@@ -142,7 +143,7 @@ fun Greeting(modifier: Modifier = Modifier, viewModel: HomeViewModel = viewModel
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(0.dp,10.dp)
+            modifier = Modifier.padding(0.dp, 10.dp)
         ) {
             OutlinedTextField(
                 value = exchange.value.symbol,
@@ -162,13 +163,15 @@ fun Greeting(modifier: Modifier = Modifier, viewModel: HomeViewModel = viewModel
             Button(
 
                 onClick = {
+                    exchangeResultList.clear()
                     viewModel.setStateEvent(
                         ExchangeStateEvent.ConvertAmount(
                             amount.value.toDouble(),
                             exchange.value.rate
                         )
                     )
-                }, enabled =  amount.value.isNotEmpty()
+                },
+                enabled = amount.value.isNotEmpty() && exchange.value.symbol != stringResource(id = R.string.select_currency)
             ) {
                 Text(text = "Convert")
             }
@@ -184,7 +187,9 @@ fun Greeting(modifier: Modifier = Modifier, viewModel: HomeViewModel = viewModel
 fun ShowExchangeResult(
     list: ArrayList<ExchangeEntity>,
 ) {
-    LazyColumn(modifier = Modifier.padding(10.dp,0.dp) ) {
+    val listState = rememberLazyListState()
+
+    LazyColumn(state = listState, modifier = Modifier.padding(10.dp, 0.dp)) {
         items(list) { exchangeEntity ->
             Text(
                 modifier = Modifier.padding(bottom = 16.dp),
@@ -225,7 +230,7 @@ fun ShowCurrencies(
                                 exchangeModel.value.rate = entity.rate
                                 showDialog.value = false
                             },
-                            modifier = Modifier.padding(10.dp),
+                            modifier = Modifier.padding(10.dp).fillMaxWidth(),
                             style = TextStyle(
                                 color = Color.Black,
                                 fontSize = 14.sp,
